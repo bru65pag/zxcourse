@@ -50,18 +50,58 @@ cdflag  db 64
 ; DO NOT CHANGE SYSVAR ABOVE!
 
 ; free codeable memory
-gamecode jr gamecode			; your code, this is example to show this works
+gamecode 
+	ld a,63
+showa
+	ld (screen),a
+	dec a
+	jr nz, showa
+	jr gamecode
 
 ; the display file, Code the lines needed.
 dfile 	db 118
 
 ; each line has text and a Newline
-	db 28,29,30,31,32,33,34,35,36,37
-	db 28,29,30,31,32,33,34,35,36,37
-	db 28,29,30,31,32,33,34,35,36,37
-	db 28,29,30,31,32,33,34,35,36,37
+screen
+	block 20, 128	; block places 20x character 128,inverted space
 	db 118
- 	db "T"+101,"E"+101,"S"+101,"T"+101
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
+	db 118
+	block 20, 128
 	db 118
 
 ; this byte fills the unused part of the screen
