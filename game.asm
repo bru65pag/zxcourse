@@ -56,7 +56,14 @@ showa
 nokey
 	ld bc,(lastk)	; if no key pressed, bc is equal to 255
 	inc c
-	jr z,nokey		; if c is 0, no key was pressed, wait
+	jr z, nokey		; if c is 0, no key pressed, wait
+	
+upkey
+	ld bc,(lastk)	; if no key pressed, bc is equal to 255
+	inc c
+	jr nz,upkey		; if c is not 0, a key is pressed, wait
+
+
 
 	ld (screen),a
 	dec a
