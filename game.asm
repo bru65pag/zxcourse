@@ -53,6 +53,11 @@ cdflag  db 64
 gamecode 
 	ld a,63
 showa
+nokey
+	ld bc,(lastk)	; if no key pressed, bc is equal to 255
+	inc c
+	jr z,nokey		; if c is 0, no key was pressed, wait
+
 	ld (screen),a
 	dec a
 	jr nz, showa
