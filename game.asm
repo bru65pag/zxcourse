@@ -50,13 +50,39 @@ cdflag  db 64
 ; DO NOT CHANGE SYSVAR ABOVE!
 
 ; free codeable memory
-gamecode 
-	ld bc,#0101		; B=1, C=1, first position on the screen
+gamecode
 
-moveloop 
-	call field		; find PRINT AT position
+waitforkey
+	ld a,0
+	in a,(254)
+	cpl
+	and %00011111
+	jp z, waitforkey
 
-	ld (hl),"O"-27		; we write a "O" on the screen
+; clear message
+	ld bc,#0305
+	call field
+	ld b,11				; number of chars to clear
+loop_clear
+	ld (hl),128
+	inc hl
+	djnz loop_clear
+
+
+	ld bc,#0101			; B=1, C=1, first position on the screen
+newdot
+	push bc				; save xy player 
+	call rnd			; get a random number	
+	ld b,a				; set as Y
+	call rnd			; get a next random number
+	ld c,a				; st as X
+	call field
+	ld (hl),27+128		; place an inverted dot
+	pop bc				; get xy player
+
+moveloop
+	call field
+	ld (hl),"O"+101	; we write a "O" INVERTED on the screen
 
 	push hl	
 	ld hl,frames		; make hl point to the timecounter
@@ -128,6 +154,21 @@ frow
 	pop bc			; get back original Y X
 	ret
 
+rnd
+	ld de,0			; get the pointer in ROM
+	ld hl,(frames)		; for randomness get framecounter
+	add hl,de		; add framecounter
+	dec hl			; when framecounter is unchanged make sure a change is done
+	ld a,h			; H can have any value, but ROM is #0000-#1FFF
+	and #0f			; only #0000-#0f00 is what we use
+	ld h,a			; set pointer back within ROM
+	ld (rnd+1),hl		; save current pointer (selfmodifying code!!!)
+	ld a,(hl)		; get value in ROM
+range
+	sub 20			; we need 0-19 only
+	jr nc,range
+	adc a,20		; undo last subtraction, range 1-20
+	ret			; back to mainprogram
 
 
 ; the display file, Code the lines needed.
@@ -139,7 +180,9 @@ screen
 	db 118
 	block 20, 128
 	db 118
-	block 20, 128
+	block 4, 128
+	db "P"+101,"R"+101,"E"+101,"S"+101,"S"+101, 128,"A"+101,128,"K"+101,"E"+101,"Y"+101
+	block 5, 128
 	db 118
 	block 20, 128
 	db 118
