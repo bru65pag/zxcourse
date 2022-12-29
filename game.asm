@@ -50,55 +50,84 @@ cdflag  db 64
 ; DO NOT CHANGE SYSVAR ABOVE!
 
 ; free codeable memory
-gamecode
-	ld hl,screen
+gamecode 
+	ld bc,#0101		; B=1, C=1, first position on the screen
 
-moveloop
-	push hl				; save our displayposition
-	
+moveloop 
+	call field		; find PRINT AT position
+
+	ld (hl),"O"-27		; we write a "O" on the screen
+
+	push hl	
 	ld hl,frames		; make hl point to the timecounter
-	ld a,(hl)			; get the timecounter in A
-	sub 2				; take of 2, the number we want to test
-wfr	cp (hl)				; test if the value is the same
-	jr nz,wfr			; NOW WE WAIT UNTIL FRAMES MATCHES A!
+	ld a,(hl)		; get the timecounter in A
+	sub 2			; take of 2, the number we want to test
+wfr
+	cp (hl)			; test if the value is the same
+	jr nz,wfr		; NOW WE WAIT UNTIL FRAMES MATCHES A!
+	pop hl
 
-	pop hl				; retrieve our displayposition
-
-	ld (hl),"O"-27		; we move a "O" on the screen
+	push bc			; NOW WE NEED TO SAVE BC!
 
 wkey
 	ld bc,(lastk)		; get key information
-	ld a,c				; copy C in A to keep C
-	inc a				; Test if NOKEY pressed
-	jr z,wkey			; NO KEY, wait for key
+	ld a,c			; copy C in A to keep C
+	inc a			; Test if NOKEY pressed
+	jr z,wkey		; NO KEY, wait for key
 
-	ld (hl),128			; we pressed a key, so we erase the old position
+	ld (hl),128		; we pressed a key, so we erase the old position
 
-	push hl				; Save screenpointer on stack
-	call #7bd			; BC holds info about key, ROM can translated this here
-	ld a,(hl)			; After the CALL registercp 128pair HL points to ASCII-character, get characer
-	pop hl				; get screenpointer
+	call #7bd		; BC holds info about key, ROM can translated this here
+	pop bc
+	ld a,(hl)		; get character
 
-	cp "O"-27			; did we press the "O"?
-	jr nz,right			; we didn't go left
-
-	dec hl				; move 1 position left
-	ld a,(hl)			; get next position on the screen 
-	cp 128				; test if it is on the screen
-	jr z,okmove			; if inverted space, then move is ok
-	inc hl				; undo move left
+	cp "O"-27		; did we press the "O"?
+	jr nz,right		; we didn't go left
+left
+	dec c
+	jr nz,okmove
+	inc c			
 	jr okmove
-
 right
-	cp "P"-27			; did we press "P", right
-	jr nz,okmove		; if not, movetest done
-	inc hl				; move right
-	ld a,(hl)			; get new position
-	cp 128				; test out of screen
-	jr z,okmove			; if not, move allowed
-	dec hl				; undo move right
+	cp "P"-27		; did we press "P", right
+	jr nz,up		
+	inc c			; move right
+	ld a,c			; get new position
+	cp 21			; test out of screen
+	jr nz,okmove		; if not, move allowed
+	dec c
+	jr okmove
+up
+	cp "A"-27
+	jr nz,down
+	dec b
+	jr nz,okmove
+	inc b			
+	jr okmove
+down
+	cp "Q"-27		; did we press "A", down
+	jr nz,okmove		
+	inc b			; move down
+	ld a,b			; get new position
+	cp 21			; test out of screen
+	jr nz,okmove		; if not, move allowed
+	dec b
 okmove
 	jr moveloop		; stay in playloop
+		
+
+; BC = XY, return HL=field on screen
+field
+	push bc			; save Y and X
+	ld hl,screen-21-1	; always 1xY and 1xX added, line is 20+HALT
+	ld de,21		; the size of 1 line (20 + HALT)
+frow
+	add hl,de		; add rows until B=0
+	djnz frow		; DEC B, JR NZ frow
+	add hl,bc		; B now 0, C is X, so HL now field on screen
+	pop bc			; get back original Y X
+	ret
+
 
 
 ; the display file, Code the lines needed.
