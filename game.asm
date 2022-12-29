@@ -51,14 +51,55 @@ cdflag  db 64
 
 ; free codeable memory
 gamecode
+	ld hl,screen
+
+moveloop
+	push hl				; save our displayposition
+	
+	ld hl,frames		; make hl point to the timecounter
+	ld a,(hl)			; get the timecounter in A
+	sub 2				; take of 2, the number we want to test
+wfr	cp (hl)				; test if the value is the same
+	jr nz,wfr			; NOW WE WAIT UNTIL FRAMES MATCHES A!
+
+	pop hl				; retrieve our displayposition
+
+	ld (hl),"O"-27		; we move a "O" on the screen
+
+wkey
 	ld bc,(lastk)		; get key information
 	ld a,c				; copy C in A to keep C
 	inc a				; Test if NOKEY pressed
-	jr z,gamecode		; NO KEY, wait for key
-	call #7bd			; BC holds info about key, ROM called to translate
-	ld a,(hl)			; load the ZX81-char at address hl into a
-	ld (screen),a		; write char on screen
-	jr gamecode 		; JUMP back to start
+	jr z,wkey			; NO KEY, wait for key
+
+	ld (hl),128			; we pressed a key, so we erase the old position
+
+	push hl				; Save screenpointer on stack
+	call #7bd			; BC holds info about key, ROM can translated this here
+	ld a,(hl)			; After the CALL registercp 128pair HL points to ASCII-character, get characer
+	pop hl				; get screenpointer
+
+	cp "O"-27			; did we press the "O"?
+	jr nz,right			; we didn't go left
+
+	dec hl				; move 1 position left
+	ld a,(hl)			; get next position on the screen 
+	cp 128				; test if it is on the screen
+	jr z,okmove			; if inverted space, then move is ok
+	inc hl				; undo move left
+	jr okmove
+
+right
+	cp "P"-27			; did we press "P", right
+	jr nz,okmove		; if not, movetest done
+	inc hl				; move right
+	ld a,(hl)			; get new position
+	cp 128				; test out of screen
+	jr z,okmove			; if not, move allowed
+	dec hl				; undo move right
+okmove
+	jr moveloop		; stay in playloop
+
 
 ; the display file, Code the lines needed.
 dfile 	db 118
