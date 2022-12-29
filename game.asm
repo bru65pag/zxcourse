@@ -50,25 +50,15 @@ cdflag  db 64
 ; DO NOT CHANGE SYSVAR ABOVE!
 
 ; free codeable memory
-gamecode 
-	ld a,63
-showa
-nokey
-	ld bc,(lastk)	; if no key pressed, bc is equal to 255
-	inc c
-	jr z, nokey		; if c is 0, no key pressed, wait
-	
-upkey
-	ld bc,(lastk)	; if no key pressed, bc is equal to 255
-	inc c
-	jr nz,upkey		; if c is not 0, a key is pressed, wait
-
-
-
-	ld (screen),a
-	dec a
-	jr nz, showa
-	jr gamecode
+gamecode
+	ld bc,(lastk)		; get key information
+	ld a,c				; copy C in A to keep C
+	inc a				; Test if NOKEY pressed
+	jr z,gamecode		; NO KEY, wait for key
+	call #7bd			; BC holds info about key, ROM called to translate
+	ld a,(hl)			; load the ZX81-char at address hl into a
+	ld (screen),a		; write char on screen
+	jr gamecode 		; JUMP back to start
 
 ; the display file, Code the lines needed.
 dfile 	db 118
